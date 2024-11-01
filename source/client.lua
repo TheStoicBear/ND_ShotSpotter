@@ -1,17 +1,16 @@
 -- For support join my discord: https://discord.gg/Z9Mxu72zZ6
 
-NDCore = exports["ND_Core"]:GetCoreObject()
 local alreadyShot = false
 local setRoute = false
 local route = false
 
 -- Suppressors hash, if a weapon has these then it won't trigger the shot spotter.
-local suppresors = {
+local suppressors = {
     "0x65EA7EBB", -- Pistol.
     "0x837445AA", -- Carbine Rifle, Advanced Rifle, Bullpup Rifle, Assault Shotgun, Marksman Rifle.
     "0xA73D4664", -- .50 Pistol, Micro SMG, Assault SMG, Assault Rifle, Special Carbine, Bullpup Shotgun, Heavy Shotgun, Sniper Rifle.
     "0xC304849A", -- Combat Pistol, AP Pistol, Heavy Pistol, Vintage Pistol, SMG.
-    "0xE608B35E" -- Pump Shotgun.
+    "0xE608B35E"  -- Pump Shotgun.
 }
 
 -- check if the players location is inside the shot spotter locations, this will only be used in the code when realistic shot spotter is turned on.
@@ -24,9 +23,10 @@ function isInShotSpotterLocation(pedCoords)
     return false
 end
 
--- check if the players department can receive shot spotter alerts.
+-- check if the player's department can receive shot spotter alerts.
 function isCop()
-    local job = NDCore.Functions.GetSelectedCharacter().job
+    local player = NDCore.getPlayer()
+    local job = player.job
     for _, department in pairs(config.receiveAlerts) do
         if department == job then
             return true
@@ -37,10 +37,9 @@ end
 
 function triggerShotSpotter(ped)
     local pedCoords = GetEntityCoords(ped)
+    local postal = false
     if config.shotSpotterUsePostal then
         postal = exports[config.postalResourceName]:getPostal()
-    else
-        postal = false
     end
 
     -- if the player isn't in the realistic shot spotter locations then the shot spotter won't trigger.
@@ -56,9 +55,9 @@ function triggerShotSpotter(ped)
         end
     end
 
-    -- if the player has a suppresor attached to their weapon then the shot spotter won't trigger.
-    for _, suppresor in pairs(suppresors) do
-        if HasPedGotWeaponComponent(ped, selectedWeapon, tonumber(suppresor)) then
+    -- if the player has a suppressor attached to their weapon then the shot spotter won't trigger.
+    for _, suppressor in pairs(suppressors) do
+        if HasPedGotWeaponComponent(ped, selectedWeapon, tonumber(suppressor)) then
             return
         end
     end
@@ -101,7 +100,7 @@ RegisterNetEvent("ND_ShotSpotter:Report", function(street, pedCoords, postal)
         return
     end
 
-    blip = AddBlipForCoord(pedCoords.x, pedCoords.y, pedCoords.z)
+    local blip = AddBlipForCoord(pedCoords.x, pedCoords.y, pedCoords.z)
     setRoute = true
     route = false
     TriggerEvent("ND_shotSpotter:setRoute")
@@ -110,6 +109,7 @@ RegisterNetEvent("ND_ShotSpotter:Report", function(street, pedCoords, postal)
     SetBlipAsShortRange(blip, true)
     BeginTextCommandSetBlipName("STRING")
     SetBlipColour(blip, 1)
+    local msg
     if not postal then
         msg = "Shotspotter detected in " .. street .. "."
         AddTextComponentString("Shot Spotter: " .. street)
