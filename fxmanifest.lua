@@ -13,6 +13,7 @@ server_scripts {
     "source/server.lua"
 }
 client_scripts {
+    "@ND_Core/init.lua",
     "config_client.lua",
     "source/client.lua"
 }
